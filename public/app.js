@@ -26,6 +26,12 @@ async function fetchFlats() {
     }
 }
 
+function formatDate(date) {
+    if (!date) return '';
+    const d = new Date(date);
+    return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
 function renderFlats(flats) {
     flatList.innerHTML = '';
     markers.forEach(m => map.removeLayer(m));
@@ -39,6 +45,10 @@ function renderFlats(flats) {
         card.className = 'flat-card';
         card.innerHTML = `
             <h3>${flat.title}</h3>
+            <div class="flat-meta">
+                <span class="source">${flat.source}</span>
+                <span class="date">${formatDate(flat.addedAt)}</span>
+            </div>
             <div class="flat-address">${flat.address}</div>
             <div class="flat-details">
                 <span class="price">${flat.price}</span>

@@ -14,7 +14,9 @@ const PORT = process.env.PORT || 3000;
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/api/flats', (req, res) => {
-    const flats = loadFlats();
+    let flats = loadFlats();
+    // Sort newest on top based on addedAt
+    flats.sort((a, b) => new Date(b.addedAt || 0) - new Date(a.addedAt || 0));
     res.json(flats);
 });
 
@@ -34,13 +36,20 @@ async function runScraper() {
     const updatedFlats = [...existingFlats];
 
     for (const flat of allScrapedFlats) {
-        if (isNewFlat(flat, existingFlats)) {
+        if (isNewFlat(flat, updatedFlats)) { // Use updatedFlats to avoid double-processing in the same run
             console.log(`New flat found from ${flat.source}: ${flat.title}`);
             
-            // Geocode only if coordinates are missing (Degewo)
+            // Geocode only if coordinates are missing (Degewo/Gewobag)
             const processedFlat = (flat.lat && flat.lon) ? flat : await geocodeFlat(flat);
             
+            // Add a timestamp for when this listing was first found
+            processedFlat.addedAt = new Date().toISOString();
+            
             updatedFlats.push(processedFlat);
+            
+            // Save after EACH new flat to ensure we don't lose progress and API stays updated
+            saveFlats(updatedFlats);
+            
             await sendNotification(processedFlat);
             newFlatsCount++;
         }

@@ -1,10 +1,5 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
-const NodeGeocoder = require('node-geocoder');
-
-const geocoder = NodeGeocoder({
-  provider: 'openstreetmap'
-});
 
 async function scrapeDegewo() {
   console.log('Scraping Degewo...');
@@ -67,8 +62,8 @@ async function scrapeDegewo() {
 
 async function fetchDegewoZipCode(link) {
     try {
-        // Add a small random delay (1-3 seconds) to avoid rate limiting
-        const delay = Math.floor(Math.random() * 2000) + 1000;
+        // Add a small random delay (1-2 seconds) to avoid rate limiting
+        const delay = Math.floor(Math.random() * 1000) + 1000;
         await new Promise(resolve => setTimeout(resolve, delay));
 
         const response = await axios.get(link, {
@@ -108,12 +103,11 @@ async function geocodeFlat(flat) {
         let queryAddress = flat.address;
 
         if (flat.source === 'Degewo') {
-            console.log(`Fetching ZIP code for Degewo flat: ${flat.link}`);
             const zip = await fetchDegewoZipCode(flat.link);
             if (zip) {
                 const street = flat.address.split('|')[0].trim();
                 queryAddress = `${street}, ${zip} Berlin, Germany`;
-                flat.fullAddress = queryAddress; // Store full address for display
+                flat.fullAddress = queryAddress; 
             } else {
                 queryAddress = flat.address.split('|')[0].trim() + ', Berlin, Germany';
             }
@@ -121,25 +115,32 @@ async function geocodeFlat(flat) {
             queryAddress = flat.address + ', Germany';
         }
 
-        // Add a delay to avoid rate limiting from geocoder (openstreetmap)
-        // Nominatim requires at most 1 request per second. We use 2 seconds to be safe.
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // Delay to avoid overwhelming free APIs
+        await new Promise(resolve => setTimeout(resolve, 3100));
 
         console.log(`Geocoding (${flat.source}): ${queryAddress}`);
-        const res = await geocoder.geocode(queryAddress);
         
-        if (res.length > 0) {
-            flat.lat = res[0].latitude;
-            flat.lon = res[0].longitude;
-            console.log(`Geocoded ${flat.title} to ${flat.lat}, ${flat.lon}`);
+        // Try Photon (komoot.io) which is OSM-based but often more permissive
+        const response = await axios.get('https://photon.komoot.io/api/', {
+            params: {
+                q: queryAddress,
+                limit: 1
+            },
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            }
+        });
+
+        if (response.data && response.data.features && response.data.features.length > 0) {
+            const feature = response.data.features[0];
+            flat.lat = feature.geometry.coordinates[1];
+            flat.lon = feature.geometry.coordinates[0];
+            console.log(`Geocoded ${flat.title} to ${flat.lat}, ${flat.lon} (Photon)`);
         } else {
             console.warn(`Geocoding returned no results for: ${queryAddress}`);
         }
     } catch (error) {
         console.error(`Geocoding failed for ${flat.address}:`, error.message);
-        if (error.response && error.response.data) {
-            console.error('Error response data:', error.response.data);
-        }
     }
     return flat;
 }
@@ -212,12 +213,34 @@ async function scrapeGewobag() {
             areaStr = parts[1];
         }
 
-        // Parsing for filtering
-        const priceNum = parseFloat(priceStr.replace('ab', '').replace('€', '').replace(',', '.').trim());
-        const areaNum = parseFloat(areaStr.replace('ab', '').replace('m²', '').replace(',', '.').trim());
-        const roomsNum = parseFloat(roomsStr.replace('Zimmer', '').replace(',', '.').trim());
+        const cleanNum = (str) => {
+            if (!str) return 0;
+            // German numbers use . as thousand separator and , as decimal separator
+            // First, remove anything that isn't a digit, comma, or dot
+            let cleaned = str.replace(/[^\d,\.]/g, '').trim();
+            // If it has both , and ., then the last one is probably the decimal separator
+            const lastComma = cleaned.lastIndexOf(',');
+            const lastDot = cleaned.lastIndexOf('.');
+            
+            if (lastComma > lastDot) {
+                // Comma is the decimal separator (German style)
+                cleaned = cleaned.replace(/\./g, ''); // Remove thousand dots
+                cleaned = cleaned.replace(',', '.'); // Convert comma to dot
+            } else if (lastDot > lastComma) {
+                // Dot is the decimal separator (English style)
+                cleaned = cleaned.replace(/,/g, ''); // Remove thousand commas
+            } else {
+                // Only one type of separator or none. If it's a comma, it's likely decimal in German.
+                if (cleaned.includes(',')) cleaned = cleaned.replace(',', '.');
+            }
+            
+            return parseFloat(cleaned) || 0;
+        };
 
-        // Filters: 1-2 rooms, < 900 EUR, 40-55 sqm
+        const priceNum = cleanNum(priceStr);
+        const areaNum = cleanNum(areaStr);
+        const roomsNum = cleanNum(roomsStr);
+
         if (roomsNum >= 1 && roomsNum <= 2 && priceNum <= 900 && areaNum >= 40 && areaNum <= 55) {
             results.push({
                 id,
@@ -264,14 +287,12 @@ async function scrapeHowoge() {
         const areaNum = item.area;
         const priceNum = item.rent;
 
-        // Filter: 1-2 rooms, 40-55 sqm
-        // We'll also apply the < 900 EUR filter for consistency if not specified otherwise
         if (roomsNum >= 1 && roomsNum <= 2 && areaNum >= 40 && areaNum <= 55 && priceNum <= 900) {
             results.push({
                 id: item.uid.toString(),
                 title: item.title,
                 link: 'https://www.howoge.de' + item.link,
-                address: item.title, // In Howoge, title is often the address
+                address: item.title, 
                 price: item.rent + ' €',
                 area: item.area + ' m²',
                 rooms: item.rooms.toString(),

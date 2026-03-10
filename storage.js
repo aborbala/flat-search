@@ -25,7 +25,8 @@ function saveFlats(flats) {
 }
 
 function isNewFlat(flat, existingFlats) {
-    return !existingFlats.some(f => f.id === flat.id || f.link === f.link);
+    // Check by ID or Link for robustness
+    return !existingFlats.some(f => f.id === flat.id || f.link === flat.link);
 }
 
 module.exports = {

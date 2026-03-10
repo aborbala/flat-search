@@ -84,8 +84,28 @@ h1 span {
 
 .flat-card h3 {
     font-size: 1rem;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
     line-height: 1.4;
+}
+
+.flat-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    font-size: 0.75rem;
+}
+
+.source {
+    background: rgba(99, 102, 241, 0.2);
+    color: var(--primary);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.date {
+    color: var(--text-muted);
 }
 
 .flat-address {
