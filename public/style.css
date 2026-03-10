@@ -1,0 +1,133 @@
+:root {
+    --primary: #6366f1;
+    --primary-hover: #4f46e5;
+    --bg: #0f172a;
+    --card-bg: rgba(30, 41, 59, 0.7);
+    --text: #f8fafc;
+    --text-muted: #94a3b8;
+    --accent: #10b981;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Outfit', sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+}
+
+#map {
+    flex: 1;
+    height: 100%;
+    z-index: 1;
+}
+
+#sidebar {
+    width: 400px;
+    background: var(--bg);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    z-index: 10;
+    box-shadow: -10px 0 20px rgba(0, 0, 0, 0.3);
+}
+
+header {
+    padding: 2rem;
+    background: linear-gradient(to bottom, rgba(99, 102, 241, 0.1), transparent);
+}
+
+h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+h1 span {
+    color: var(--primary);
+}
+
+#stats {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+#flat-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 1.5rem 2rem;
+}
+
+.flat-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.flat-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--primary);
+    background: rgba(30, 41, 59, 0.9);
+}
+
+.flat-card h3 {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.flat-address {
+    font-size: 0.825rem;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
+}
+
+.flat-details {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.price { color: var(--accent); }
+
+.leaflet-container {
+    background: #0b0e14;
+}
+
+.leaflet-popup-content-wrapper {
+    background: var(--bg);
+    color: var(--text);
+    border-radius: 8px;
+    border: 1px solid var(--primary);
+}
+
+.leaflet-popup-tip {
+    background: var(--primary);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
