@@ -3,7 +3,8 @@ const cron = require('node-cron');
 const path = require('path');
 require('dotenv').config();
 
-const { scrapeDegewo, geocodeFlat } = require('./scraper');
+const { scrapeDegewo, scrapeGesobau, geocodeFlat } = require('./scraper');
+
 const { loadFlats, saveFlats, isNewFlat } = require('./storage');
 const { sendNotification } = require('./notifier');
 
@@ -20,17 +21,25 @@ app.get('/api/flats', (req, res) => {
 async function runScraper() {
     console.log('--- Starting Scraper Run ---');
     const existingFlats = loadFlats();
+    
+    console.log('Fetching flats from providers...');
     const degewoFlats = await scrapeDegewo();
+    const gesobauFlats = await scrapeGesobau();
+    
+    const allScrapedFlats = [...degewoFlats, ...gesobauFlats];
     
     let newFlatsCount = 0;
     const updatedFlats = [...existingFlats];
 
-    for (const flat of degewoFlats) {
+    for (const flat of allScrapedFlats) {
         if (isNewFlat(flat, existingFlats)) {
-            console.log(`New flat found: ${flat.title}`);
-            const geocodedFlat = await geocodeFlat(flat);
-            updatedFlats.push(geocodedFlat);
-            await sendNotification(geocodedFlat);
+            console.log(`New flat found from ${flat.source}: ${flat.title}`);
+            
+            // Geocode only if coordinates are missing (Degewo)
+            const processedFlat = (flat.lat && flat.lon) ? flat : await geocodeFlat(flat);
+            
+            updatedFlats.push(processedFlat);
+            await sendNotification(processedFlat);
             newFlatsCount++;
         }
     }

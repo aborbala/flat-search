@@ -96,7 +96,40 @@ async function geocodeFlat(flat) {
     return flat;
 }
 
+async function scrapeGesobau() {
+  console.log('Scraping Gesobau...');
+  const url = 'https://www.gesobau.de/mieten/wohnungssuche/?tx_solr[filter][0]=zimmer:\'1-1\'&resultsPerPage=10000&resultsPage=0&resultAsJSON=1&befilter[0]=kanal_stringM:Bestand&befilter[1]=nutzungsart_stringS:WOHNEN';
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0) Gecko/20100101 Firefox/148.0',
+        'Accept': 'application/json, text/javascript, */*; q=0.01',
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    });
+    const data = response.data;
+    const flats = data.map(item => ({
+      id: item.uid.toString(),
+      title: item.raw.title,
+      link: 'https://www.gesobau.de' + item.detail,
+      address: item.raw.adresse_stringS + ', ' + item.raw.plz_stringS + ' ' + item.raw.ort_stringS,
+      price: item.raw.warmmiete_floatS + ' €',
+      area: item.raw.wohnflaeche_floatS + ' m²',
+      rooms: item.raw.zimmer_intS.toString(),
+      lat: item.lat,
+      lon: item.lng,
+      source: 'Gesobau'
+    }));
+    console.log('Found ' + flats.length + ' flats on Gesobau.');
+    return flats;
+  } catch (error) {
+    console.error('Error scraping Gesobau:', error.message);
+    return [];
+  }
+}
+
 module.exports = {
+  scrapeGesobau,
   scrapeDegewo,
   geocodeFlat
 };
