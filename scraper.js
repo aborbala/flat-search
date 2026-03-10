@@ -117,7 +117,7 @@ async function geocodeFlat(flat) {
             } else {
                 queryAddress = flat.address.split('|')[0].trim() + ', Berlin, Germany';
             }
-        } else if (flat.source === 'Gesobau') {
+        } else if (flat.source === 'Gesobau' || flat.source === 'Gewobag') {
             queryAddress = flat.address + ', Germany';
         }
 
@@ -169,8 +169,65 @@ async function scrapeGesobau() {
   }
 }
 
+async function scrapeGewobag() {
+  console.log('Scraping Gewobag...');
+  const url = 'https://www.gewobag.de/fuer-mietinteressentinnen/mietangebote/wohnung/?objekttyp%5B%5D=wohnung&gesamtmiete_von=&gesamtmiete_bis=&gesamtflaeche_von=&gesamtflaeche_bis=&zimmer_von=&zimmer_bis=&sort-by=';
+  
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0) Gecko/20100101 Firefox/148.0'
+      }
+    });
+    const $ = cheerio.load(response.data);
+    const flats = [];
+
+    $('article.angebot-big-box').each((i, element) => {
+        const $el = $(element);
+        const title = $el.find('h3.angebot-title').text().trim();
+        const link = $el.find('a.read-more-link').attr('href');
+        const id = link.split('/').filter(Boolean).pop();
+        const address = $el.find('address').text().trim().replace(/\s+/g, ' ');
+        
+        let price = 'N/A';
+        $el.find('tr.angebot-kosten').each((j, row) => {
+            if ($(row).find('th').text().includes('Gesamtmiete')) {
+                price = $(row).find('td').text().trim();
+            }
+        });
+
+        let area = 'N/A';
+        let rooms = 'N/A';
+        const areaText = $el.find('tr.angebot-area td').text().trim();
+        if (areaText) {
+            const parts = areaText.split('|').map(p => p.trim());
+            rooms = parts[0];
+            area = parts[1];
+        }
+
+        flats.push({
+            id,
+            title,
+            link,
+            address,
+            price,
+            area,
+            rooms,
+            source: 'Gewobag'
+        });
+    });
+
+    console.log(`Found ${flats.length} flats on Gewobag.`);
+    return flats;
+  } catch (error) {
+    console.error('Error scraping Gewobag:', error.message);
+    return [];
+  }
+}
+
 module.exports = {
   scrapeGesobau,
   scrapeDegewo,
+  scrapeGewobag,
   geocodeFlat
 };

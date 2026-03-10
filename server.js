@@ -3,7 +3,7 @@ const cron = require('node-cron');
 const path = require('path');
 require('dotenv').config();
 
-const { scrapeDegewo, scrapeGesobau, geocodeFlat } = require('./scraper');
+const { scrapeDegewo, scrapeGesobau, scrapeGewobag, geocodeFlat } = require('./scraper');
 
 const { loadFlats, saveFlats, isNewFlat } = require('./storage');
 const { sendNotification } = require('./notifier');
@@ -25,8 +25,9 @@ async function runScraper() {
     console.log('Fetching flats from providers...');
     const degewoFlats = await scrapeDegewo();
     const gesobauFlats = await scrapeGesobau();
+    const gewobagFlats = await scrapeGewobag();
     
-    const allScrapedFlats = [...degewoFlats, ...gesobauFlats];
+    const allScrapedFlats = [...degewoFlats, ...gesobauFlats, ...gewobagFlats];
     
     let newFlatsCount = 0;
     const updatedFlats = [...existingFlats];
