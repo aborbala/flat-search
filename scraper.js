@@ -117,11 +117,15 @@ async function geocodeFlat(flat) {
             } else {
                 queryAddress = flat.address.split('|')[0].trim() + ', Berlin, Germany';
             }
-        } else if (flat.source === 'Gesobau' || flat.source === 'Gewobag') {
+        } else if (flat.source === 'Gesobau' || flat.source === 'Gewobag' || flat.source === 'Howoge') {
             queryAddress = flat.address + ', Germany';
         }
 
-        console.log(`Geocoding: ${queryAddress}`);
+        // Add a delay to avoid rate limiting from geocoder (openstreetmap)
+        // Nominatim requires at most 1 request per second. We use 2 seconds to be safe.
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        console.log(`Geocoding (${flat.source}): ${queryAddress}`);
         const res = await geocoder.geocode(queryAddress);
         
         if (res.length > 0) {
@@ -133,6 +137,9 @@ async function geocodeFlat(flat) {
         }
     } catch (error) {
         console.error(`Geocoding failed for ${flat.address}:`, error.message);
+        if (error.response && error.response.data) {
+            console.error('Error response data:', error.response.data);
+        }
     }
     return flat;
 }
@@ -180,7 +187,7 @@ async function scrapeGewobag() {
       }
     });
     const $ = cheerio.load(response.data);
-    const flats = [];
+    const results = [];
 
     $('article.angebot-big-box').each((i, element) => {
         const $el = $(element);
@@ -189,38 +196,96 @@ async function scrapeGewobag() {
         const id = link.split('/').filter(Boolean).pop();
         const address = $el.find('address').text().trim().replace(/\s+/g, ' ');
         
-        let price = 'N/A';
+        let priceStr = '0';
         $el.find('tr.angebot-kosten').each((j, row) => {
             if ($(row).find('th').text().includes('Gesamtmiete')) {
-                price = $(row).find('td').text().trim();
+                priceStr = $(row).find('td').text().trim();
             }
         });
 
-        let area = 'N/A';
-        let rooms = 'N/A';
+        let areaStr = '0';
+        let roomsStr = '0';
         const areaText = $el.find('tr.angebot-area td').text().trim();
         if (areaText) {
             const parts = areaText.split('|').map(p => p.trim());
-            rooms = parts[0];
-            area = parts[1];
+            roomsStr = parts[0];
+            areaStr = parts[1];
         }
 
-        flats.push({
-            id,
-            title,
-            link,
-            address,
-            price,
-            area,
-            rooms,
-            source: 'Gewobag'
-        });
+        // Parsing for filtering
+        const priceNum = parseFloat(priceStr.replace('ab', '').replace('€', '').replace(',', '.').trim());
+        const areaNum = parseFloat(areaStr.replace('ab', '').replace('m²', '').replace(',', '.').trim());
+        const roomsNum = parseFloat(roomsStr.replace('Zimmer', '').replace(',', '.').trim());
+
+        // Filters: 1-2 rooms, < 900 EUR, 40-55 sqm
+        if (roomsNum >= 1 && roomsNum <= 2 && priceNum <= 900 && areaNum >= 40 && areaNum <= 55) {
+            results.push({
+                id,
+                title,
+                link,
+                address,
+                price: priceStr,
+                area: areaStr,
+                rooms: roomsStr,
+                source: 'Gewobag'
+            });
+        }
     });
 
-    console.log(`Found ${flats.length} flats on Gewobag.`);
-    return flats;
+    console.log(`Found ${results.length} filtered flats on Gewobag (from ${$('article.angebot-big-box').length} total).`);
+    return results;
   } catch (error) {
     console.error('Error scraping Gewobag:', error.message);
+    return [];
+  }
+}
+
+async function scrapeHowoge() {
+  console.log('Scraping Howoge...');
+  const url = 'https://www.howoge.de/?type=999&tx_howrealestate_json_list[action]=immoList';
+  const headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0) Gecko/20100101 Firefox/148.0',
+    'Accept': 'application/json, text/javascript, */*; q=0.01',
+    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+    'X-Requested-With': 'XMLHttpRequest',
+    'Origin': 'https://www.howoge.de',
+    'Referer': 'https://www.howoge.de/immobiliensuche/wohnungssuche.html'
+  };
+
+  const data = 'tx_howrealestate_json_list%5Bpage%5D=1&tx_howrealestate_json_list%5Blimit%5D=100&tx_howrealestate_json_list%5Blang%5D=&tx_howrealestate_json_list%5Brooms%5D=&tx_howrealestate_json_list%5Bwbs%5D=';
+
+  try {
+    const response = await axios.post(url, data, { headers });
+    const immoobjects = response.data.immoobjects || [];
+    const results = [];
+
+    for (const item of immoobjects) {
+        const roomsNum = item.rooms;
+        const areaNum = item.area;
+        const priceNum = item.rent;
+
+        // Filter: 1-2 rooms, 40-55 sqm
+        // We'll also apply the < 900 EUR filter for consistency if not specified otherwise
+        if (roomsNum >= 1 && roomsNum <= 2 && areaNum >= 40 && areaNum <= 55 && priceNum <= 900) {
+            results.push({
+                id: item.uid.toString(),
+                title: item.title,
+                link: 'https://www.howoge.de' + item.link,
+                address: item.title, // In Howoge, title is often the address
+                price: item.rent + ' €',
+                area: item.area + ' m²',
+                rooms: item.rooms.toString(),
+                lat: item.coordinates ? parseFloat(item.coordinates.lat) : null,
+                lon: item.coordinates ? parseFloat(item.coordinates.lng) : null,
+                source: 'Howoge'
+            });
+        }
+    }
+
+    console.log(`Found ${results.length} filtered flats on Howoge (from ${immoobjects.length} total).`);
+    return results;
+  } catch (error) {
+    console.error('Error scraping Howoge:', error.message);
     return [];
   }
 }
@@ -229,5 +294,6 @@ module.exports = {
   scrapeGesobau,
   scrapeDegewo,
   scrapeGewobag,
+  scrapeHowoge,
   geocodeFlat
 };
