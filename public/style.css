@@ -85,6 +85,7 @@ h1 span {
 .flat-card h3 {
     font-size: 1rem;
     margin-bottom: 0.5rem;
+    line-height: 1.4;
 }
 
 .flat-address {
@@ -98,6 +99,45 @@ h1 span {
     gap: 1rem;
     font-size: 0.875rem;
     font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.flat-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-map, .btn-link {
+    flex: 1;
+    padding: 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border: none;
+    font-family: 'Outfit', sans-serif;
+}
+
+.btn-map {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-map:hover {
+    background: var(--primary-hover);
+}
+
+.btn-link {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-link:hover {
+    background: rgba(255, 255, 255, 0.1);
 }
 
 .price { color: var(--accent); }

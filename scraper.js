@@ -17,8 +17,6 @@ async function scrapeDegewo() {
     'Origin': 'https://www.degewo.de'
   };
 
-  // Using the user's provided data-urlencode parameters (simplified for the general case)
-  // We'll focus on the essential fields to get the latest results
   const data = new URLSearchParams({
     'tx_openimmo_immobilie[search]': 'search',
     'tx_openimmo_immobilie[page]': '1',
@@ -43,7 +41,6 @@ async function scrapeDegewo() {
         const title = $el.find('h2.article__title').text().trim();
         const address = $el.find('span.article__meta').text().trim().replace(/\s+/g, ' ');
         
-        // Extracting price, rooms, area from details or specific spans
         const price = $el.find('.article__price-tag .price').text().trim();
         const rooms = $el.find('.article__properties-item:nth-child(1) .text').text().trim();
         const area = $el.find('.article__properties-item:nth-child(2) .text').text().trim();
@@ -68,6 +65,39 @@ async function scrapeDegewo() {
   }
 }
 
+async function fetchDegewoZipCode(link) {
+    try {
+        // Add a small random delay (1-3 seconds) to avoid rate limiting
+        const delay = Math.floor(Math.random() * 2000) + 1000;
+        await new Promise(resolve => setTimeout(resolve, delay));
+
+        const response = await axios.get(link, {
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0' }
+        });
+        const $ = cheerio.load(response.data);
+        
+        // Address is usually in span.expose__meta
+        const fullAddress = $('span.expose__meta').first().text().trim();
+        if (!fullAddress) {
+            console.warn(`Could not find address on detail page: ${link}`);
+            return null;
+        }
+
+        const parts = fullAddress.split('|');
+        if (parts.length > 1) {
+            const zipPart = parts[1].trim(); 
+            const zipMatch = zipPart.match(/\d{5}/);
+            if (zipMatch) {
+                return zipMatch[0];
+            }
+        }
+        console.warn(`Could not extract ZIP from address string: "${fullAddress}"`);
+    } catch (error) {
+        console.error(`Error fetching detail page for ${link}:`, error.message);
+    }
+    return null;
+}
+
 async function geocodeFlat(flat) {
     try {
         if (!flat.address) {
@@ -75,20 +105,31 @@ async function geocodeFlat(flat) {
             return flat;
         }
 
-        // Degewo addresses are often "Street Number | District"
-        // Geocoder works better with just "Street Number, Berlin"
-        const cleanAddress = flat.address.split('|')[0].trim();
-        const query = cleanAddress + ', Berlin, Germany';
-        
-        console.log(`Geocoding: ${query}`);
-        const res = await geocoder.geocode(query);
+        let queryAddress = flat.address;
+
+        if (flat.source === 'Degewo') {
+            console.log(`Fetching ZIP code for Degewo flat: ${flat.link}`);
+            const zip = await fetchDegewoZipCode(flat.link);
+            if (zip) {
+                const street = flat.address.split('|')[0].trim();
+                queryAddress = `${street}, ${zip} Berlin, Germany`;
+                flat.fullAddress = queryAddress; // Store full address for display
+            } else {
+                queryAddress = flat.address.split('|')[0].trim() + ', Berlin, Germany';
+            }
+        } else if (flat.source === 'Gesobau') {
+            queryAddress = flat.address + ', Germany';
+        }
+
+        console.log(`Geocoding: ${queryAddress}`);
+        const res = await geocoder.geocode(queryAddress);
         
         if (res.length > 0) {
             flat.lat = res[0].latitude;
             flat.lon = res[0].longitude;
             console.log(`Geocoded ${flat.title} to ${flat.lat}, ${flat.lon}`);
         } else {
-            console.warn(`Geocoding returned no results for: ${query}`);
+            console.warn(`Geocoding returned no results for: ${queryAddress}`);
         }
     } catch (error) {
         console.error(`Geocoding failed for ${flat.address}:`, error.message);

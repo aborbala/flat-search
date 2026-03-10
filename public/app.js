@@ -33,7 +33,7 @@ function renderFlats(flats) {
 
     stats.textContent = `Found ${flats.length} flats recently.`;
 
-    flats.forEach(flat => {
+    flats.forEach((flat, index) => {
         // Create Sidebar Card
         const card = document.createElement('div');
         card.className = 'flat-card';
@@ -45,13 +45,16 @@ function renderFlats(flats) {
                 <span>${flat.area}</span>
                 <span>${flat.rooms}</span>
             </div>
+            <div class="flat-actions">
+                <button class="btn-map" onclick="zoomToFlat(${index}, event)">Show on Map</button>
+                <a href="${flat.link}" target="_blank" class="btn-link">View Details</a>
+            </div>
         `;
         
         card.onclick = () => {
             if (flat.lat && flat.lon) {
-                map.flyTo([flat.lat, flat.lon], 14);
+                map.flyTo([flat.lat, flat.lon], 15);
             }
-            window.open(flat.link, '_blank');
         };
 
         flatList.appendChild(card);
@@ -62,18 +65,32 @@ function renderFlats(flats) {
             marker.bindPopup(`
                 <div style="font-family: 'Outfit', sans-serif;">
                     <strong style="display:block; margin-bottom:5px;">${flat.title}</strong>
-                    <div style="color: #10b981; font-weight: 600;">${flat.price}</div>
-                    <a href="${flat.link}" target="_blank" style="color: #6366f1; text-decoration: none; font-size: 0.8rem; display: block; margin-top: 5px;">View on Degewo</a>
+                    <div style="color: #10b981; font-weight: 600; margin-bottom: 5px;">${flat.price}</div>
+                    <div style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 5px;">${flat.address}</div>
+                    <a href="${flat.link}" target="_blank" style="color: #6366f1; text-decoration: none; font-size: 0.8rem; font-weight: 600; display: block;">View listing</a>
                 </div>
             `);
             markers.push(marker);
+            marker.flatIndex = index;
+        } else {
+            markers.push(null);
         }
     });
 
-    if (flats.length > 0 && flats[0].lat) {
-        // map.fitBounds(L.featureGroup(markers).getBounds());
+    if (flats.length > 0 && markers.some(m => m)) {
+        // Option to fit bounds
     }
 }
+
+window.zoomToFlat = (index, event) => {
+    event.stopPropagation();
+    const marker = markers[index];
+    if (marker) {
+        const latLng = marker.getLatLng();
+        map.flyTo(latLng, 16);
+        marker.openPopup();
+    }
+};
 
 fetchFlats();
 // Refresh every minute
