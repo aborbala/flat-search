@@ -1,5 +1,6 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
+const config = require('./config');
 
 const cleanNum = (val) => {
   if (val === null || val === undefined) return 0;
@@ -62,7 +63,7 @@ async function scrapeDegewo() {
         const areaNum = cleanNum(area);
         const roomsNum = cleanNum(rooms);
 
-        if (roomsNum >= 1 && roomsNum <= 2 && priceNum <= 900 && areaNum >= 40 && areaNum <= 55) {
+        if (roomsNum >= config.minRooms && roomsNum <= config.maxRooms && priceNum <= config.maxPrice && areaNum >= config.minArea && areaNum <= config.maxArea) {
             flats.push({
                 id,
                 title,
@@ -188,7 +189,7 @@ async function scrapeGesobau() {
         const areaNum = cleanNum(item.raw.wohnflaeche_floatS);
         const priceNum = cleanNum(item.raw.warmmiete_floatS);
         
-        if (roomsNum >= 1 && roomsNum <= 2 && areaNum >= 40 && areaNum <= 55 && priceNum <= 900) {
+        if (roomsNum >= config.minRooms && roomsNum <= config.maxRooms && areaNum >= config.minArea && areaNum <= config.maxArea && priceNum <= config.maxPrice) {
             flats.push({
               id: item.uid.toString(),
               title: item.raw.title,
@@ -251,7 +252,7 @@ async function scrapeGewobag() {
         const areaNum = cleanNum(areaStr);
         const roomsNum = cleanNum(roomsStr);
 
-        if (roomsNum >= 1 && roomsNum <= 2 && priceNum <= 900 && areaNum >= 40 && areaNum <= 55) {
+        if (roomsNum >= config.minRooms && roomsNum <= config.maxRooms && priceNum <= config.maxPrice && areaNum >= config.minArea && areaNum <= config.maxArea) {
             results.push({
                 id,
                 title,
@@ -297,7 +298,7 @@ async function scrapeHowoge() {
         const areaNum = item.area;
         const priceNum = item.rent;
 
-        if (roomsNum >= 1 && roomsNum <= 2 && areaNum >= 40 && areaNum <= 55 && priceNum <= 900) {
+        if (roomsNum >= config.minRooms && roomsNum <= config.maxRooms && areaNum >= config.minArea && areaNum <= config.maxArea && priceNum <= config.maxPrice) {
             results.push({
                 id: item.uid.toString(),
                 title: item.title,
@@ -354,7 +355,7 @@ async function scrapeWbm() {
         const areaNum = cleanNum(areaStr);
         const roomsNum = cleanNum(roomsStr);
 
-        if (id && roomsNum >= 1 && roomsNum <= 2 && priceNum <= 900 && areaNum >= 40 && areaNum <= 55) {
+        if (id && roomsNum >= config.minRooms && roomsNum <= config.maxRooms && priceNum <= config.maxPrice && areaNum >= config.minArea && areaNum <= config.maxArea) {
             results.push({
                 id,
                 title,
