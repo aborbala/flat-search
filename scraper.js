@@ -1,6 +1,24 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 
+const cleanNum = (val) => {
+  if (val === null || val === undefined) return 0;
+  let str = String(val);
+  let cleaned = str.replace(/[^\d,\.]/g, '').trim();
+  const lastComma = cleaned.lastIndexOf(',');
+  const lastDot = cleaned.lastIndexOf('.');
+  
+  if (lastComma > lastDot) {
+      cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+  } else if (lastDot > lastComma) {
+      cleaned = cleaned.replace(/,/g, '');
+  } else {
+      if (cleaned.includes(',')) cleaned = cleaned.replace(',', '.');
+  }
+  return parseFloat(cleaned) || 0;
+};
+
+
 async function scrapeDegewo() {
   console.log('Scraping Degewo...');
   
@@ -15,9 +33,9 @@ async function scrapeDegewo() {
   const data = new URLSearchParams({
     'tx_openimmo_immobilie[search]': 'search',
     'tx_openimmo_immobilie[page]': '1',
-    'tx_openimmo_immobilie[nettokaltmiete]': '0_700',
+    'tx_openimmo_immobilie[nettokaltmiete]': '0_900',
     'tx_openimmo_immobilie[wohnflaeche_start]': '40',
-    'tx_openimmo_immobilie[wohnflaeche_end]': '60',
+    'tx_openimmo_immobilie[wohnflaeche_end]': '55',
     'tx_openimmo_immobilie[anzahlZimmer_start]': '1',
     'tx_openimmo_immobilie[anzahlZimmer_end]': '2',
     'tx_openimmo_immobilie[sortBy]': 'immobilie_preise_warmmiete',
@@ -40,16 +58,22 @@ async function scrapeDegewo() {
         const rooms = $el.find('.article__properties-item:nth-child(1) .text').text().trim();
         const area = $el.find('.article__properties-item:nth-child(2) .text').text().trim();
 
-        flats.push({
-            id,
-            title,
-            link,
-            address,
-            price,
-            area,
-            rooms,
-            source: 'Degewo'
-        });
+        const priceNum = cleanNum(price);
+        const areaNum = cleanNum(area);
+        const roomsNum = cleanNum(rooms);
+
+        if (roomsNum >= 1 && roomsNum <= 2 && priceNum <= 900 && areaNum >= 40 && areaNum <= 55) {
+            flats.push({
+                id,
+                title,
+                link,
+                address,
+                price,
+                area,
+                rooms,
+                source: 'Degewo'
+            });
+        }
     });
 
     console.log(`Found ${flats.length} flats on Degewo.`);
@@ -111,7 +135,7 @@ async function geocodeFlat(flat) {
             } else {
                 queryAddress = flat.address.split('|')[0].trim() + ', Berlin, Germany';
             }
-        } else if (flat.source === 'Gesobau' || flat.source === 'Gewobag' || flat.source === 'Howoge') {
+        } else if (['Gesobau', 'Gewobag', 'Howoge', 'WBM'].includes(flat.source)) {
             queryAddress = flat.address + ', Germany';
         }
 
@@ -147,7 +171,7 @@ async function geocodeFlat(flat) {
 
 async function scrapeGesobau() {
   console.log('Scraping Gesobau...');
-  const url = 'https://www.gesobau.de/mieten/wohnungssuche/?tx_solr[filter][0]=zimmer:\'1-1\'&resultsPerPage=10000&resultsPage=0&resultAsJSON=1&befilter[0]=kanal_stringM:Bestand&befilter[1]=nutzungsart_stringS:WOHNEN';
+  const url = 'https://www.gesobau.de/mieten/wohnungssuche/?resultsPerPage=10000&resultsPage=0&resultAsJSON=1&befilter[0]=kanal_stringM:Bestand&befilter[1]=nutzungsart_stringS:WOHNEN';
   try {
     const response = await axios.get(url, {
       headers: {
@@ -157,19 +181,29 @@ async function scrapeGesobau() {
       }
     });
     const data = response.data;
-    const flats = data.map(item => ({
-      id: item.uid.toString(),
-      title: item.raw.title,
-      link: 'https://www.gesobau.de' + item.detail,
-      address: item.raw.adresse_stringS + ', ' + item.raw.plz_stringS + ' ' + item.raw.ort_stringS,
-      price: item.raw.warmmiete_floatS + ' €',
-      area: item.raw.wohnflaeche_floatS + ' m²',
-      rooms: item.raw.zimmer_intS.toString(),
-      lat: item.lat,
-      lon: item.lng,
-      source: 'Gesobau'
-    }));
-    console.log('Found ' + flats.length + ' flats on Gesobau.');
+    const flats = [];
+    
+    for (const item of data) {
+        const roomsNum = cleanNum(item.raw.zimmer_intS);
+        const areaNum = cleanNum(item.raw.wohnflaeche_floatS);
+        const priceNum = cleanNum(item.raw.warmmiete_floatS);
+        
+        if (roomsNum >= 1 && roomsNum <= 2 && areaNum >= 40 && areaNum <= 55 && priceNum <= 900) {
+            flats.push({
+              id: item.uid.toString(),
+              title: item.raw.title,
+              link: 'https://www.gesobau.de' + item.detail,
+              address: item.raw.adresse_stringS + ', ' + item.raw.plz_stringS + ' ' + item.raw.ort_stringS,
+              price: item.raw.warmmiete_floatS + ' €',
+              area: item.raw.wohnflaeche_floatS + ' m²',
+              rooms: item.raw.zimmer_intS.toString(),
+              lat: item.lat,
+              lon: item.lng,
+              source: 'Gesobau'
+            });
+        }
+    }
+    console.log(`Found ${flats.length} filtered flats on Gesobau (from ${data.length} total).`);
     return flats;
   } catch (error) {
     console.error('Error scraping Gesobau:', error.message);
@@ -212,30 +246,6 @@ async function scrapeGewobag() {
             roomsStr = parts[0];
             areaStr = parts[1];
         }
-
-        const cleanNum = (str) => {
-            if (!str) return 0;
-            // German numbers use . as thousand separator and , as decimal separator
-            // First, remove anything that isn't a digit, comma, or dot
-            let cleaned = str.replace(/[^\d,\.]/g, '').trim();
-            // If it has both , and ., then the last one is probably the decimal separator
-            const lastComma = cleaned.lastIndexOf(',');
-            const lastDot = cleaned.lastIndexOf('.');
-            
-            if (lastComma > lastDot) {
-                // Comma is the decimal separator (German style)
-                cleaned = cleaned.replace(/\./g, ''); // Remove thousand dots
-                cleaned = cleaned.replace(',', '.'); // Convert comma to dot
-            } else if (lastDot > lastComma) {
-                // Dot is the decimal separator (English style)
-                cleaned = cleaned.replace(/,/g, ''); // Remove thousand commas
-            } else {
-                // Only one type of separator or none. If it's a comma, it's likely decimal in German.
-                if (cleaned.includes(',')) cleaned = cleaned.replace(',', '.');
-            }
-            
-            return parseFloat(cleaned) || 0;
-        };
 
         const priceNum = cleanNum(priceStr);
         const areaNum = cleanNum(areaStr);
@@ -311,10 +321,66 @@ async function scrapeHowoge() {
   }
 }
 
+async function scrapeWbm() {
+  console.log('Scraping WBM...');
+  const url = 'https://www.wbm.de/wohnungen-berlin/angebote/';
+  
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0) Gecko/20100101 Firefox/148.0'
+      }
+    });
+    const $ = cheerio.load(response.data);
+    const results = [];
+
+    $('.openimmo-search-list-item').each((i, element) => {
+        const $el = $(element);
+        const title = $el.find('.imageTitle').text().trim();
+        const linkElem = $el.find('a.immo-button-cta, .btn.sign');
+        let link = linkElem.attr('href');
+        if (link && !link.startsWith('http')) {
+            link = 'https://www.wbm.de' + link;
+        }
+        
+        const id = $el.attr('data-uid');
+        const address = $el.find('.address').text().trim().replace(/\s+/g, ' ');
+
+        const priceStr = $el.find('.main-property-rent').text().trim();
+        const areaStr = $el.find('.main-property-size').text().trim();
+        const roomsStr = $el.find('.main-property-rooms').text().trim();
+
+        const priceNum = cleanNum(priceStr);
+        const areaNum = cleanNum(areaStr);
+        const roomsNum = cleanNum(roomsStr);
+
+        if (id && roomsNum >= 1 && roomsNum <= 2 && priceNum <= 900 && areaNum >= 40 && areaNum <= 55) {
+            results.push({
+                id,
+                title,
+                link,
+                address,
+                price: priceStr,
+                area: areaStr,
+                rooms: roomsStr,
+                source: 'WBM'
+            });
+        }
+    });
+
+    console.log(`Found ${results.length} filtered flats on WBM.`);
+    return results;
+  } catch (error) {
+    console.error('Error scraping WBM:', error.message);
+    return [];
+  }
+}
+
 module.exports = {
   scrapeGesobau,
   scrapeDegewo,
   scrapeGewobag,
   scrapeHowoge,
+  scrapeWbm,
   geocodeFlat
 };
