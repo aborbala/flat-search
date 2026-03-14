@@ -136,7 +136,7 @@ async function geocodeFlat(flat) {
             } else {
                 queryAddress = flat.address.split('|')[0].trim() + ', Berlin, Germany';
             }
-        } else if (['Gesobau', 'Gewobag', 'Howoge', 'WBM'].includes(flat.source)) {
+        } else if (['Gesobau', 'Gewobag', 'Howoge', 'WBM', 'Stadt und Land'].includes(flat.source)) {
             queryAddress = flat.address + ', Germany';
         }
 
@@ -377,11 +377,64 @@ async function scrapeWbm() {
   }
 }
 
+async function scrapeStadtUndLand() {
+  console.log('Scraping Stadt und Land...');
+  const url = 'https://d2396ha8oiavw0.cloudfront.net/sul-main/immoSearch';
+  
+  try {
+    const response = await axios.post(url, {}, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0) Gecko/20100101 Firefox/148.0',
+        'Content-Type': 'text/plain;charset=UTF-8',
+        'Origin': 'https://stadtundland.de',
+        'Referer': 'https://stadtundland.de/'
+      }
+    });
+
+    const data = response.data.data || [];
+    const results = [];
+
+    for (const item of data) {
+        if (item.details && item.details.immoType === 'wohnung') {
+            const roomsNum = cleanNum(item.details.rooms);
+            const areaNum = cleanNum(item.details.livingSpace);
+            const priceNum = cleanNum(item.costs.totalRent || item.costs.warmRent);
+
+            if (roomsNum >= config.minRooms && roomsNum <= config.maxRooms && areaNum >= config.minArea && areaNum <= config.maxArea && priceNum <= config.maxPrice) {
+                const id = item.details.immoNumber || Math.random().toString();
+                const addressObj = item.address || {};
+                const addressStr = `${addressObj.street || ''} ${addressObj.house_number || ''}, ${addressObj.postal_code || ''} ${addressObj.city || ''}`.trim();
+
+                let safePrice = item.costs.totalRent || item.costs.warmRent || priceNum;
+
+                results.push({
+                    id: id.toString(),
+                    title: item.headline,
+                    link: 'https://stadtundland.de/Mieten/index.php', 
+                    address: addressStr.replace(/\s+/g, ' '),
+                    price: safePrice + ' €',
+                    area: item.details.livingSpace + ' m²',
+                    rooms: item.details.rooms,
+                    source: 'Stadt und Land'
+                });
+            }
+        }
+    }
+    
+    console.log(`Found ${results.length} filtered flats on Stadt und Land.`);
+    return results;
+  } catch (error) {
+    console.error('Error scraping Stadt und Land:', error.message);
+    return [];
+  }
+}
+
 module.exports = {
   scrapeGesobau,
   scrapeDegewo,
   scrapeGewobag,
   scrapeHowoge,
   scrapeWbm,
+  scrapeStadtUndLand,
   geocodeFlat
 };

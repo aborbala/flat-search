@@ -1,0 +1,302 @@
+{
+  "data": [
+    {
+      "headline": "Abschließbarer Außenstellplatz PKW - noch verfügbar",
+      "address": {
+        "postal_code": "12439",
+        "city": "Berlin",
+        "street": "Bruno-Bürgel-Weg",
+        "house_number": "39 - 43 C"
+      },
+      "details": {
+        "immoNumber": "1001/5106/52048",
+        "immoType": "parken",
+        "immoSubType": "STELLPLATZ"
+      },
+      "costs": {
+        "coldRent": "50.00"
+      },
+      "image": {
+        "filename": "wohnungshelden/stadt_und_land_0b57409e-3e85-439a-8cc5-3103f8216128.jpg",
+        "alt": "5106.52048",
+        "format": "image/jpeg"
+      }
+    },
+    {
+      "headline": "Gensweg 2, Garage",
+      "address": {
+        "postal_code": "12349",
+        "city": "Berlin",
+        "street": "Gensweg",
+        "house_number": "2",
+        "precinct": "Buckower Felder"
+      },
+      "details": {
+        "immoNumber": "1001/5147/42028",
+        "immoType": "parken",
+        "immoSubType": "STELLPLATZ"
+      },
+      "costs": {
+        "coldRent": "90.00"
+      },
+      "image": {
+        "filename": "wohnungshelden/stadt_und_land_75b5063b-7a1e-4283-a8db-90fdc3c48811.jpg",
+        "alt": "Buckower Felder Parkhaus",
+        "format": "image/jpeg"
+      }
+    },
+    {
+      "headline": "Nachmietersuche für PKW-Stellplatz im Bereich Riesaer Str. 44 - 54 in Hellersdorf",
+      "address": {
+        "postal_code": "12627",
+        "city": "Berlin",
+        "street": "Riesaer Str.",
+        "house_number": "44 - 54",
+        "precinct": "Schleipfuhl"
+      },
+      "details": {
+        "immoNumber": "1050/8126/52024",
+        "immoType": "parken",
+        "immoSubType": "STELLPLATZ",
+        "totalSpace": "10.52"
+      },
+      "costs": {
+        "coldRent": "40.00"
+      },
+      "image": {
+        "filename": "wohnungshelden/stadt_und_land_f512940e-c0ef-4680-a5d5-15efb208f5fb.png",
+        "alt": "Lageplan",
+        "format": "image/png"
+      }
+    },
+    {
+      "headline": "Nachmietersuche für einen überdachten Stellplatz",
+      "address": {
+        "postal_code": "12685",
+        "city": "Berlin",
+        "street": "Pöhlbergstr.",
+        "house_number": "47",
+        "precinct": "An den Gärten der Welt"
+      },
+      "details": {
+        "immoNumber": "1001/5217/42029",
+        "immoType": "parken",
+        "immoSubType": "EINZELGARAGE",
+        "totalSpace": "12.50"
+      },
+      "costs": {
+        "coldRent": "100.00"
+      },
+      "image": {
+        "filename": "wohnungshelden/stadt_und_land_Bildimport1-2024-06-07_STADTUNDLAND_1001_WE_5217_Bilder_AA_1001_5217_42048_Stellplatz_ueberdacht1.jpg.jpg",
+        "alt": "Stellplatzbeispiel (überdacht)",
+        "format": "image/jpeg"
+      }
+    },
+    {
+      "headline": "Schöner Wohnen in Fredersdorf für Senioren",
+      "address": {
+        "postal_code": "15370",
+        "city": "Fredersdorf",
+        "street": "Martin-Luther-Str.",
+        "house_number": "14A",
+        "precinct": "Fredersdorf"
+      },
+      "details": {
+        "immoNumber": "1001/3680/00022",
+        "immoType": "wohnung",
+        "immoSubType": "ERDGESCHOSS",
+        "livingSpace": "53.09",
+        "rooms": "2.00",
+        "wheelchairFriendly": false,
+        "seniorsFriendly": false,
+        "barrierFree": false
+      },
+      "costs": {
+        "coldRent": "468.05",
+        "warmRent": "621.05",
+        "additionalCosts": "99.00",
+        "heatingCosts": "54.00",
+        "totalRent": "621.05",
+        "deposit": "1.404,15 €",
+        "discount": "0.00"
+      },
+      "image": {
+        "filename": "wohnungshelden/stadt_und_land_1aca45db-20af-4bf2-b081-b7615c4aa3c5.jpg",
+        "alt": "Balkon",
+        "format": "image/jpeg"
+      }
+    },
+    {
+      "headline": "Ortolfstr. 208, 3.G MI, Vermietung mit WBS mit besonderen Wohnbedarf",
+      "address": {
+        "postal_code": "12524",
+        "city": "Berlin",
+        "street": "Ortolfstr.",
+        "house_number": "208",
+        "precinct": "Kosmosviertel Altbestand"
+      },
+      "details": {
+        "immoNumber": "1001/0454/00089",
+        "immoType": "wohnung",
+        "immoSubType": "ETAGE",
+        "livingSpace": "42.04",
+        "rooms": "2.00",
+        "wheelchairFriendly": false,
+        "seniorsFriendly": false,
+        "barrierFree": false
+      },
+      "costs": {
+        "coldRent": "323.44",
+        "warmRent": "487.44",
+        "additionalCosts": "93.00",
+        "heatingCosts": "71.00",
+        "totalRent": "487.44",
+        "deposit": "970,32 €",
+        "discount": "0.00"
+      },
+      "image": {
+        "filename": "wohnungshelden/stadt_und_land_Bildimport1-2024-06-07_STADTUNDLAND_1001_WE_0454_AA01_1001_0454.jpg.jpg",
+        "alt": "STADTUNDLAND/1001/WE_0454/AA01_1001_0454.jpg",
+        "format": "image/jpeg"
+      }
+    },
+    {
+      "headline": "Gemütliche 3-Raum-Wohnung Sterndamm 133, 3. G LI",
+      "address": {
+        "postal_code": "12487",
+        "city": "Berlin",
+        "street": "Sterndamm",
+        "house_number": "133",
+        "precinct": "Johannisthal Süd"
+      },
+      "details": {
+        "immoNumber": "1001/6295/00046",
+        "immoType": "wohnung",
+        "immoSubType": "ETAGE",
+        "livingSpace": "58.59",
+        "rooms": "3.00",
+        "wheelchairFriendly": false,
+        "seniorsFriendly": false,
+        "barrierFree": false
+      },
+      "costs": {
+        "coldRent": "392.55",
+        "warmRent": "623.55",
+        "additionalCosts": "140.00",
+        "heatingCosts": "91.00",
+        "totalRent": "623.55",
+        "deposit": "1.177,65 €",
+        "discount": "0.00"
+      },
+      "image": {
+        "filename": "wohnungshelden/stadt_und_land_Bildimport1-2024-06-07_STADTUNDLAND_1001_WE_6295_AA01_1001_6295.jpg.jpg",
+        "alt": "STADTUNDLAND/1001/WE_6295/AA01_1001_6295.jpg",
+        "format": "image/jpeg"
+      }
+    },
+    {
+      "headline": "Wohnen am Puls der Natur und am Herz der Stadt: 3 Zimmer Neubau",
+      "address": {
+        "postal_code": "12435",
+        "city": "Berlin",
+        "street": "Galileistraße",
+        "house_number": "35",
+        "precinct": "Plänterwald"
+      },
+      "details": {
+        "immoNumber": "1001/6116/00046",
+        "immoType": "wohnung",
+        "immoSubType": "ERDGESCHOSS",
+        "livingSpace": "73.01",
+        "rooms": "3.00",
+        "wheelchairFriendly": false,
+        "seniorsFriendly": false,
+        "barrierFree": false
+      },
+      "costs": {
+        "coldRent": "1155.02",
+        "warmRent": "1399.60",
+        "additionalCosts": "164.27",
+        "heatingCosts": "80.31",
+        "totalRent": "1399.60",
+        "deposit": "3.465,06 €",
+        "discount": "0.00"
+      },
+      "image": {
+        "filename": "wohnungshelden/stadt_und_land_60486fa6-bc18-48ee-9f7b-6a96d8f19c9d.jpg",
+        "alt": "Wohnküche",
+        "format": "image/jpeg"
+      }
+    },
+    {
+      "headline": "Sterndamm 137, 2.G LI",
+      "address": {
+        "postal_code": "12487",
+        "city": "Berlin",
+        "street": "Sterndamm",
+        "house_number": "137",
+        "precinct": "Johannisthal Süd"
+      },
+      "details": {
+        "immoNumber": "1001/6295/00064",
+        "immoType": "wohnung",
+        "immoSubType": "ETAGE",
+        "livingSpace": "58.50",
+        "rooms": "3.00",
+        "wheelchairFriendly": false,
+        "seniorsFriendly": false,
+        "barrierFree": false
+      },
+      "costs": {
+        "coldRent": "391.95",
+        "warmRent": "622.95",
+        "additionalCosts": "140.00",
+        "heatingCosts": "91.00",
+        "totalRent": "622.95",
+        "deposit": "1.175,85 €",
+        "discount": "0.00"
+      },
+      "image": {
+        "filename": "wohnungshelden/stadt_und_land_Bildimport1-2024-06-07_STADTUNDLAND_1001_WE_6295_AA01_1001_6295.jpg.jpg",
+        "alt": "STADTUNDLAND/1001/WE_6295/AA01_1001_6295.jpg",
+        "format": "image/jpeg"
+      }
+    },
+    {
+      "headline": "Sterndamm 145, 4.G LI",
+      "address": {
+        "postal_code": "12487",
+        "city": "Berlin",
+        "street": "Sterndamm",
+        "house_number": "145",
+        "precinct": "Johannisthal Süd"
+      },
+      "details": {
+        "immoNumber": "1001/6295/00108",
+        "immoType": "wohnung",
+        "immoSubType": "ETAGE",
+        "livingSpace": "58.43",
+        "rooms": "3.00",
+        "wheelchairFriendly": false,
+        "seniorsFriendly": false,
+        "barrierFree": false
+      },
+      "costs": {
+        "coldRent": "391.48",
+        "warmRent": "622.48",
+        "additionalCosts": "140.00",
+        "heatingCosts": "91.00",
+        "totalRent": "622.48",
+        "deposit": "1.174,44 €",
+        "discount": "0.00"
+      },
+      "image": {
+        "filename": "wohnungshelden/stadt_und_land_Bildimport1-2024-06-07_STADTUNDLAND_1001_WE_6295_AA01_1001_6295.jpg.jpg",
+        "alt": "STADTUNDLAND/1001/WE_6295/AA01_1001_6295.jpg",
+        "format": "image/jpeg"
+      }
+    }
+  ],
+  "count": 70
+}
