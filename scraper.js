@@ -81,7 +81,7 @@ async function scrapeDegewo() {
     return flats;
   } catch (error) {
     console.error('Error scraping Degewo:', error.message);
-    return [];
+    return null;
   }
 }
 
@@ -208,7 +208,7 @@ async function scrapeGesobau() {
     return flats;
   } catch (error) {
     console.error('Error scraping Gesobau:', error.message);
-    return [];
+    return null;
   }
 }
 
@@ -270,7 +270,7 @@ async function scrapeGewobag() {
     return results;
   } catch (error) {
     console.error('Error scraping Gewobag:', error.message);
-    return [];
+    return null;
   }
 }
 
@@ -318,7 +318,7 @@ async function scrapeHowoge() {
     return results;
   } catch (error) {
     console.error('Error scraping Howoge:', error.message);
-    return [];
+    return null;
   }
 }
 
@@ -373,7 +373,7 @@ async function scrapeWbm() {
     return results;
   } catch (error) {
     console.error('Error scraping WBM:', error.message);
-    return [];
+    return null;
   }
 }
 
@@ -425,7 +425,7 @@ async function scrapeStadtUndLand() {
     return results;
   } catch (error) {
     console.error('Error scraping Stadt und Land:', error.message);
-    return [];
+    return null;
   }
 }
 

@@ -32,10 +32,34 @@ async function runScraper() {
     const wbmFlats = await scrapeWbm();
     const stadtUndLandFlats = await scrapeStadtUndLand();
     
-    const allScrapedFlats = [...degewoFlats, ...gesobauFlats, ...gewobagFlats, ...howogeFlats, ...wbmFlats, ...stadtUndLandFlats];
+    const activeProviders = {};
+    if (degewoFlats !== null) activeProviders['Degewo'] = degewoFlats;
+    if (gesobauFlats !== null) activeProviders['Gesobau'] = gesobauFlats;
+    if (gewobagFlats !== null) activeProviders['Gewobag'] = gewobagFlats;
+    if (howogeFlats !== null) activeProviders['Howoge'] = howogeFlats;
+    if (wbmFlats !== null) activeProviders['WBM'] = wbmFlats;
+    if (stadtUndLandFlats !== null) activeProviders['Stadt und Land'] = stadtUndLandFlats;
+    
+    const allScrapedFlats = Object.values(activeProviders).flat();
     
     let newFlatsCount = 0;
-    const updatedFlats = [...existingFlats];
+    
+    // Remove flats that are no longer present for successful scrapers
+    let flatsRemoved = 0;
+    let updatedFlats = existingFlats.filter(existingFlat => {
+        // Only remove if we successfully scraped that provider this run
+        if (activeProviders[existingFlat.source]) {
+            const stillExists = activeProviders[existingFlat.source].some(
+                scraped => scraped.id === existingFlat.id
+            );
+            if (!stillExists) {
+                console.log(`Flat removed (no longer listed on ${existingFlat.source}): ${existingFlat.title}`);
+                flatsRemoved++;
+                return false;
+            }
+        }
+        return true;
+    });
 
     for (const flat of allScrapedFlats) {
         if (isNewFlat(flat, updatedFlats)) { // Use updatedFlats to avoid double-processing in the same run
@@ -57,11 +81,11 @@ async function runScraper() {
         }
     }
 
-    if (newFlatsCount > 0) {
+    if (newFlatsCount > 0 || flatsRemoved > 0) {
         saveFlats(updatedFlats);
-        console.log(`Saved ${newFlatsCount} new flats.`);
+        console.log(`Saved ${newFlatsCount} new flats. Removed ${flatsRemoved} outdated flats.`);
     } else {
-        console.log('No new flats found.');
+        console.log('No new flats found and no flats removed.');
     }
     console.log('--- Scraper Run Finished ---');
 }
