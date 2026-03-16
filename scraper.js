@@ -429,6 +429,103 @@ async function scrapeStadtUndLand() {
   }
 }
 
+async function scrapeBerlinovo() {
+  console.log('Scraping Berlinovo...');
+  const url = 'https://www.berlinovo.de/de/wohnungen/suche';
+  
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0) Gecko/20100101 Firefox/148.0',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'de,en-US;q=0.9,en;q=0.8'
+      }
+    });
+
+    const $ = cheerio.load(response.data);
+    const results = [];
+    const detailPromises = [];
+
+    $('article.node--type-apartment').each((i, element) => {
+        const $el = $(element);
+        const title = $el.find('.title, h2, h3, .node__title').text().trim() || 'Berlinovo Wohnung';
+        const rawLink = $el.find('a').attr('href');
+        if (!rawLink) return;
+        const link = rawLink.startsWith('http') ? rawLink : 'https://www.berlinovo.de' + rawLink;
+        const id = link.split('/').pop();
+
+        const rightSideText = $el.find('.right').text().replace(/\s+/g, ' ');
+        let priceStr = '0';
+        const priceMatch = rightSideText.match(/Warmmiete\s+([\d,\.]+)\s*€/);
+        if (priceMatch) priceStr = priceMatch[1];
+        else {
+             const brMatch = rightSideText.match(/Bruttokaltmiete\s+([\d,\.]+)\s*€/);
+             if (brMatch) priceStr = brMatch[1];
+        }
+        
+        let roomsStr = '0';
+        const roomsMatch = rightSideText.match(/Zimmer\s+([\d,\.]+)/);
+        if (roomsMatch) roomsStr = roomsMatch[1];
+        
+        const priceNum = cleanNum(priceStr);
+        const roomsNum = cleanNum(roomsStr);
+        
+        if (roomsNum >= config.minRooms && roomsNum <= config.maxRooms && priceNum <= config.maxPrice) {
+            let lat = null, lon = null;
+            const geoText = $el.find('.field--name-field-location-geofield').text().trim();
+            if (geoText) {
+                try {
+                    const geo = JSON.parse(geoText);
+                    lon = geo.coordinates[0];
+                    lat = geo.coordinates[1];
+                } catch (e) {}
+            }
+
+            detailPromises.push(async () => {
+                try {
+                    // Small delay to prevent rate limiting
+                    await new Promise(res => setTimeout(res, Math.random() * 1000 + 500));
+                    const detailRes = await axios.get(link, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' } });
+                    const $detail = cheerio.load(detailRes.data);
+                    
+                    let areaStr = '0';
+                    const areaText = $detail('.field--name-field-net-area').text();
+                    const areaMatchArea = areaText.match(/([\d,\.]+)/);
+                    if (areaMatchArea) areaStr = areaMatchArea[1];
+                    
+                    const areaNum = cleanNum(areaStr);
+                    
+                    let address = $detail('.field--name-field-location').text().replace('Adresse', '').replace(/\s+/g, ' ').trim();
+                    if (!address) address = 'Berlin';
+
+                    if (areaNum >= config.minArea && areaNum <= config.maxArea) {
+                         results.push({
+                            id, title, link, address, 
+                            price: priceStr + ' €', 
+                            area: areaStr + ' m²',
+                            rooms: roomsStr, lat, lon, source: 'Berlinovo'
+                         });
+                    }
+                } catch (e) {
+                    console.error("Error fetching Berlinovo details:", e.message);
+                }
+            });
+        }
+    });
+
+    for (const fetchTask of detailPromises) {
+        await fetchTask();
+    }
+    
+    console.log(`Found ${results.length} filtered flats on Berlinovo.`);
+    return results;
+
+  } catch (error) {
+    console.error('Error scraping Berlinovo:', error.message);
+    return null;
+  }
+}
+
 module.exports = {
   scrapeGesobau,
   scrapeDegewo,
@@ -436,5 +533,6 @@ module.exports = {
   scrapeHowoge,
   scrapeWbm,
   scrapeStadtUndLand,
+  scrapeBerlinovo,
   geocodeFlat
 };
