@@ -3,7 +3,7 @@ const cron = require('node-cron');
 const path = require('path');
 require('dotenv').config();
 
-const { scrapeDegewo, scrapeGesobau, scrapeGewobag, scrapeHowoge, scrapeWbm, scrapeStadtUndLand, scrapeBerlinovo, geocodeFlat } = require('./scraper');
+const { scrapeDegewo, scrapeGesobau, scrapeGewobag, scrapeHowoge, scrapeWbm, scrapeStadtUndLand, scrapeBerlinovo, scrapeImmoscout, geocodeFlat } = require('./scraper');
 
 const { loadFlats, saveFlats, isNewFlat } = require('./storage');
 const { sendNotification } = require('./notifier');
@@ -32,7 +32,8 @@ async function runScraper() {
     const wbmFlats = await scrapeWbm();
     const stadtUndLandFlats = await scrapeStadtUndLand();
     const berlinovoFlats = await scrapeBerlinovo();
-    
+    const immoscoutFlats = await scrapeImmoscout();
+
     const activeProviders = {};
     if (degewoFlats !== null) activeProviders['Degewo'] = degewoFlats;
     if (gesobauFlats !== null) activeProviders['Gesobau'] = gesobauFlats;
@@ -41,6 +42,7 @@ async function runScraper() {
     if (wbmFlats !== null) activeProviders['WBM'] = wbmFlats;
     if (stadtUndLandFlats !== null) activeProviders['Stadt und Land'] = stadtUndLandFlats;
     if (berlinovoFlats !== null) activeProviders['Berlinovo'] = berlinovoFlats;
+    if (immoscoutFlats !== null) activeProviders['ImmobilienScout24'] = immoscoutFlats;
     
     const allScrapedFlats = Object.values(activeProviders).flat();
     

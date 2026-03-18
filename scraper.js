@@ -136,7 +136,7 @@ async function geocodeFlat(flat) {
             } else {
                 queryAddress = flat.address.split('|')[0].trim() + ', Berlin, Germany';
             }
-        } else if (['Gesobau', 'Gewobag', 'Howoge', 'WBM', 'Stadt und Land'].includes(flat.source)) {
+        } else if (['Gesobau', 'Gewobag', 'Howoge', 'WBM', 'Stadt und Land', 'ImmobilienScout24'].includes(flat.source)) {
             queryAddress = flat.address + ', Germany';
         }
 
@@ -526,6 +526,78 @@ async function scrapeBerlinovo() {
   }
 }
 
+async function scrapeImmoscout() {
+  console.log('Scraping ImmobilienScout24...');
+  const url = `https://www.immobilienscout24.de/Suche/de/berlin/berlin/wohnung-mieten?numberofrooms=${config.minRooms}.0-${config.maxRooms}.0&price=-${config.maxPrice}.0&livingspace=${config.minArea}.0-${config.maxArea}.0&exclusioncriteria=swapflat&pricetype=rentpermonth&sorting=2`;
+
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0) Gecko/20100101 Firefox/148.0',
+        'Accept': 'application/json',
+        'Accept-Language': 'de,en-US;q=0.9,en;q=0.8',
+        'Referer': 'https://www.immobilienscout24.de/',
+      }
+    });
+
+    const data = response.data;
+    const resultList = data?.searchResponseModel?.["resultlist.resultlist"];
+    const entries = resultList?.resultlistEntries?.[0]?.resultlistEntry;
+
+    if (!entries || !Array.isArray(entries)) {
+      console.log('ImmobilienScout24: No results or unexpected response structure.');
+      return [];
+    }
+
+    const results = [];
+
+    for (const entry of entries) {
+      const re = entry["resultlist.realEstate"];
+      if (!re) continue;
+
+      const id = (re["@id"] || entry["@id"] || '').toString();
+      const title = re.title || '';
+      const link = `https://www.immobilienscout24.de/expose/${id}`;
+
+      const addr = re.address || {};
+      const street = addr.street || '';
+      const houseNumber = addr.houseNumber || '';
+      const postcode = addr.postcode || '';
+      const city = addr.city || 'Berlin';
+      const quarter = addr.quarter || '';
+      const address = `${street} ${houseNumber}, ${postcode} ${quarter || city}`.replace(/\s+/g, ' ').trim();
+
+      const priceNum = cleanNum(re.calculatedTotalRent?.totalRent?.value || re.price?.value || 0);
+      const areaNum = cleanNum(re.livingSpace || 0);
+      const roomsNum = cleanNum(re.numberOfRooms || 0);
+
+      if (roomsNum >= config.minRooms && roomsNum <= config.maxRooms && areaNum >= config.minArea && areaNum <= config.maxArea && priceNum <= config.maxPrice) {
+        const lat = re.address?.wgs84Coordinate?.latitude || null;
+        const lon = re.address?.wgs84Coordinate?.longitude || null;
+
+        results.push({
+          id,
+          title,
+          link,
+          address,
+          price: priceNum + ' €',
+          area: areaNum + ' m²',
+          rooms: roomsNum.toString(),
+          lat: lat ? parseFloat(lat) : null,
+          lon: lon ? parseFloat(lon) : null,
+          source: 'ImmobilienScout24'
+        });
+      }
+    }
+
+    console.log(`Found ${results.length} filtered flats on ImmobilienScout24 (from ${entries.length} total).`);
+    return results;
+  } catch (error) {
+    console.error('Error scraping ImmobilienScout24:', error.message);
+    return null;
+  }
+}
+
 module.exports = {
   scrapeGesobau,
   scrapeDegewo,
@@ -534,5 +606,6 @@ module.exports = {
   scrapeWbm,
   scrapeStadtUndLand,
   scrapeBerlinovo,
+  scrapeImmoscout,
   geocodeFlat
 };
