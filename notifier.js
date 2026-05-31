@@ -8,7 +8,7 @@ const bot = new TelegramBot(token, { polling: false });
 
 async function sendNotification(flat) {
     const message = `
-🏠 *New Flat Found!*
+🏠 *New Flat Found!* (${flat.source})
 
 *${flat.title}*
 📍 ${flat.address}

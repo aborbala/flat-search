@@ -410,7 +410,7 @@ async function scrapeStadtUndLand() {
                 results.push({
                     id: id.toString(),
                     title: item.headline,
-                    link: 'https://stadtundland.de/Mieten/index.php', 
+                    link: `https://stadtundland.de/vermietung/mietangebote/${encodeURIComponent(id)}`,
                     address: addressStr.replace(/\s+/g, ' '),
                     price: safePrice + ' €',
                     area: item.details.livingSpace + ' m²',
@@ -449,9 +449,14 @@ async function scrapeBerlinovo() {
     $('article.node--type-apartment').each((i, element) => {
         const $el = $(element);
         const title = $el.find('.title, h2, h3, .node__title').text().trim() || 'Berlinovo Wohnung';
-        const rawLink = $el.find('a').attr('href');
+        // Prefer a link that points to a flat detail page; fall back to title/heading anchors,
+        // then to any anchor. Strip query params so the id stays stable across scrape runs.
+        const rawLink = $el.find('a[href*="/wohnungen/"]').first().attr('href')
+            || $el.find('h2 a, h3 a, .node__title a').first().attr('href')
+            || $el.find('a').first().attr('href');
         if (!rawLink) return;
-        const link = rawLink.startsWith('http') ? rawLink : 'https://www.berlinovo.de' + rawLink;
+        const cleanRawLink = rawLink.split('?')[0];
+        const link = cleanRawLink.startsWith('http') ? cleanRawLink : 'https://www.berlinovo.de' + cleanRawLink;
         const id = link.split('/').pop();
 
         const rightSideText = $el.find('.right').text().replace(/\s+/g, ' ');
@@ -526,6 +531,9 @@ async function scrapeBerlinovo() {
   }
 }
 
+// ImmobilienScout24 is handled by the Playwright-based scraper in scraper-is24.js
+const { scrapeImmobilienscout } = require('./scraper-is24');
+
 module.exports = {
   scrapeGesobau,
   scrapeDegewo,
@@ -534,5 +542,6 @@ module.exports = {
   scrapeWbm,
   scrapeStadtUndLand,
   scrapeBerlinovo,
+  scrapeImmobilienscout,
   geocodeFlat
 };
