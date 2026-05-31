@@ -531,9 +531,6 @@ async function scrapeBerlinovo() {
   }
 }
 
-// ImmobilienScout24 is handled by the Playwright-based scraper in scraper-is24.js
-const { scrapeImmobilienscout } = require('./scraper-is24');
-
 module.exports = {
   scrapeGesobau,
   scrapeDegewo,
@@ -542,6 +539,5 @@ module.exports = {
   scrapeWbm,
   scrapeStadtUndLand,
   scrapeBerlinovo,
-  scrapeImmobilienscout,
   geocodeFlat
 };

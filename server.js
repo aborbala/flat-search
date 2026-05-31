@@ -32,7 +32,8 @@ async function runScraper() {
     const wbmFlats = await scrapeWbm();
     const stadtUndLandFlats = await scrapeStadtUndLand();
     const berlinovoFlats = await scrapeBerlinovo();
-    
+    const immoscoutFlats = null; // Disabled: Relying on official ImmoScout24 email alerts instead
+
     const activeProviders = {};
     if (degewoFlats !== null) activeProviders['Degewo'] = degewoFlats;
     if (gesobauFlats !== null) activeProviders['Gesobau'] = gesobauFlats;
