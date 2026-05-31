@@ -401,9 +401,9 @@ async function scrapeStadtUndLand() {
             const priceNum = cleanNum(item.costs.totalRent || item.costs.warmRent);
 
             if (roomsNum >= config.minRooms && roomsNum <= config.maxRooms && areaNum >= config.minArea && areaNum <= config.maxArea && priceNum <= config.maxPrice) {
-                const id = item.details.immoNumber || Math.random().toString();
                 const addressObj = item.address || {};
                 const addressStr = `${addressObj.street || ''} ${addressObj.house_number || ''}, ${addressObj.postal_code || ''} ${addressObj.city || ''}`.trim();
+                const id = item.details.immoNumber || `sul-${addressStr}-${item.details.rooms}-${item.details.livingSpace}`.replace(/\s+/g, '-');
 
                 let safePrice = item.costs.totalRent || item.costs.warmRent || priceNum;
 
