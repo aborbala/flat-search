@@ -349,13 +349,12 @@ async function scrapeWbm() {
     $('.openimmo-search-list-item').each((i, element) => {
         const $el = $(element);
         const title = $el.find('.imageTitle').text().trim();
-        const linkElem = $el.find('a.immo-button-cta, .btn.sign');
-        let link = linkElem.attr('href');
-        if (link && !link.startsWith('http')) {
-            link = 'https://www.wbm.de' + link;
-        }
-        
-        const id = $el.attr('data-uid');
+        const rawLink = ($el.find('a[href*="/angebote/details/"]').first().attr('href')
+            || $el.find('a.immo-button-cta, .btn.sign').first().attr('href') || '').split('?')[0];
+        if (!rawLink) return;
+        const link = rawLink.startsWith('http') ? rawLink : 'https://www.wbm.de' + rawLink;
+        const id = link.split('/').filter(Boolean).pop() || $el.attr('data-uid');
+        if (!id) return;
         const address = $el.find('.address').text().trim().replace(/\s+/g, ' ');
 
         const priceStr = $el.find('.main-property-rent').text().trim();
@@ -366,7 +365,7 @@ async function scrapeWbm() {
         const areaNum = cleanNum(areaStr);
         const roomsNum = cleanNum(roomsStr);
 
-        if (id && roomsNum >= config.minRooms && roomsNum <= config.maxRooms && priceNum <= config.maxPrice && areaNum >= config.minArea && areaNum <= config.maxArea) {
+        if (roomsNum >= config.minRooms && roomsNum <= config.maxRooms && priceNum <= config.maxPrice && areaNum >= config.minArea && areaNum <= config.maxArea) {
             results.push({
                 id,
                 title,
@@ -421,7 +420,7 @@ async function scrapeStadtUndLand() {
                 results.push({
                     id: id.toString(),
                     title: item.headline,
-                    link: `https://stadtundland.de/vermietung/mietangebote/${encodeURIComponent(id)}`,
+                    link: `https://stadtundland.de/wohnungssuche/${encodeURIComponent(id)}`,
                     address: addressStr.replace(/\s+/g, ' '),
                     price: safePrice + ' €',
                     area: item.details.livingSpace + ' m²',
@@ -460,15 +459,14 @@ async function scrapeBerlinovo() {
     $('article.node--type-apartment').each((i, element) => {
         const $el = $(element);
         const title = $el.find('.title, h2, h3, .node__title').text().trim() || 'Berlinovo Wohnung';
-        // Prefer a link that points to a flat detail page; fall back to title/heading anchors,
-        // then to any anchor. Strip query params so the id stays stable across scrape runs.
-        const rawLink = $el.find('a[href*="/wohnungen/"]').first().attr('href')
+        const rawLink = $el.find('a[href*="/wohnung"]').first().attr('href')
             || $el.find('h2 a, h3 a, .node__title a').first().attr('href')
             || $el.find('a').first().attr('href');
         if (!rawLink) return;
         const cleanRawLink = rawLink.split('?')[0];
         const link = cleanRawLink.startsWith('http') ? cleanRawLink : 'https://www.berlinovo.de' + cleanRawLink;
-        const id = link.split('/').pop();
+        const id = link.split('/').filter(Boolean).pop();
+        if (!id) return;
 
         const rightSideText = $el.find('.right').text().replace(/\s+/g, ' ');
         let priceStr = '0';
