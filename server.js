@@ -73,9 +73,7 @@ async function runScraper() {
                 const stillExists = activeProviders[existingFlat.source].some(scraped =>
                     scraped.id === existingFlat.id ||
                     (scraped.link && existingFlat.link &&
-                     scraped.link.split('?')[0] === existingFlat.link.split('?')[0]) ||
-                    (scraped.address && scraped.address === existingFlat.address &&
-                     scraped.area && scraped.area === existingFlat.area)
+                     scraped.link.split('?')[0] === existingFlat.link.split('?')[0])
                 );
                 if (!stillExists) {
                     console.log(`REMOVED [${existingFlat.source}] id="${existingFlat.id}" — not found in scraped results`);

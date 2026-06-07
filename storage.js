@@ -18,30 +18,42 @@ function loadFlats() {
 }
 
 function saveFlats(flats) {
-    const tmp = DATA_FILE + '.tmp';
+    const json = JSON.stringify(flats, null, 2);
     try {
         fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
-        fs.writeFileSync(tmp, JSON.stringify(flats, null, 2), 'utf8');
+    } catch (error) {
+        console.error('Could not create data directory:', error.message);
+    }
+
+    // Try atomic write (tmp + rename). renameSync fails on some Android/FUSE
+    // storage (EXDEV/EPERM), so fall back to a direct write if it throws.
+    const tmp = DATA_FILE + '.tmp';
+    try {
+        fs.writeFileSync(tmp, json, 'utf8');
         fs.renameSync(tmp, DATA_FILE);
     } catch (error) {
-        console.error('Error saving flats:', error);
+        console.error('Atomic save failed, falling back to direct write:', error.message);
         try { fs.unlinkSync(tmp); } catch (_) {}
+        try {
+            fs.writeFileSync(DATA_FILE, json, 'utf8');
+        } catch (writeError) {
+            console.error('FATAL: could not persist flats — duplicates will repeat:', writeError.message);
+            return;
+        }
+    }
+
+    // Verify the write actually landed, so persistence failures are never silent
+    if (!fs.existsSync(DATA_FILE)) {
+        console.error('FATAL: flats.json missing after save — persistence is broken');
     }
 }
 
 const stripQuery = url => (url || '').split('?')[0];
 
-// Same provider + address + area = same physical flat, regardless of ID/link changes
-const sameContent = (a, b) =>
-    a.source === b.source &&
-    a.address && b.address && a.address === b.address &&
-    a.area && b.area && a.area === b.area;
-
 function isNewFlat(flat, existingFlats) {
     return !existingFlats.some(f =>
         (f.source === flat.source && f.id === flat.id) ||
-        (stripQuery(f.link) === stripQuery(flat.link) && !!flat.link) ||
-        sameContent(f, flat)
+        (stripQuery(f.link) === stripQuery(flat.link) && !!flat.link)
     );
 }
 
