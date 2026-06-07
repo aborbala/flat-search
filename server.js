@@ -3,6 +3,12 @@ const cron = require('node-cron');
 const path = require('path');
 require('dotenv').config();
 
+const _log = console.log.bind(console);
+const _err = console.error.bind(console);
+const ts = () => new Date().toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'medium' });
+console.log = (...a) => _log(`[${ts()}]`, ...a);
+console.error = (...a) => _err(`[${ts()}]`, ...a);
+
 const { scrapeDegewo, scrapeGesobau, scrapeGewobag, scrapeHowoge, scrapeWbm, scrapeStadtUndLand, scrapeBerlinovo, geocodeFlat } = require('./scraper');
 
 const { loadFlats, saveFlats, isNewFlat } = require('./storage');

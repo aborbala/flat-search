@@ -7,15 +7,23 @@ const chatId = config.telegramChatId;
 const bot = new TelegramBot(token, { polling: false });
 
 async function sendNotification(flat) {
-    const message = `
-🏠 *New Flat Found!* (${flat.source})
+    const mapsLine = (flat.lat && flat.lon)
+        ? `\n🗺 [Open in Google Maps](https://maps.google.com/?q=${flat.lat},${flat.lon})`
+        : '';
 
-*${flat.title}*
-📍 ${flat.address}
-💰 ${flat.price} | 📏 ${flat.area} | 🚪 ${flat.rooms}
+    const addressLine = flat.address && flat.address !== flat.title
+        ? `\n📍 ${flat.address}`
+        : '';
 
-🔗 [View Details](${flat.link})
-    `;
+    const message = `🏠 *New flat — ${flat.source}*
+───────────────────
+📌 *${flat.title}*${addressLine}${mapsLine}
+───────────────────
+💶 ${flat.price}
+📐 ${flat.area}
+🚪 ${flat.rooms} room(s)
+───────────────────
+🔗 [View listing](${flat.link})`;
 
     try {
         await bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
