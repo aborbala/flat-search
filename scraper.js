@@ -50,8 +50,11 @@ async function scrapeDegewo() {
 
     $('article.article-list__item').each((i, element) => {
         const $el = $(element);
-        const link = 'https://www.degewo.de' + $el.find('a').attr('href');
-        const id = link.split('/').pop();
+        const rawHref = ($el.find('a[href*="/immosuche/"]').first().attr('href') || $el.find('a').first().attr('href') || '').split('?')[0];
+        if (!rawHref) return;
+        const link = 'https://www.degewo.de' + rawHref;
+        const id = rawHref.split('/').filter(Boolean).pop();
+        if (!id) return;
         const title = $el.find('h2.article__title').text().trim();
         const address = $el.find('span.article__meta').text().trim().replace(/\s+/g, ' ');
         
@@ -228,8 +231,11 @@ async function scrapeGewobag() {
     $('article.angebot-big-box').each((i, element) => {
         const $el = $(element);
         const title = $el.find('h3.angebot-title').text().trim();
-        const link = $el.find('a.read-more-link').attr('href');
-        const id = link.split('/').filter(Boolean).pop();
+        const rawLink = ($el.find('a.read-more-link').attr('href') || '').split('?')[0];
+        if (!rawLink) return;
+        const link = rawLink;
+        const id = rawLink.split('/').filter(Boolean).pop();
+        if (!id) return;
         const address = $el.find('address').text().trim().replace(/\s+/g, ' ');
         
         let priceStr = '0';
@@ -299,11 +305,16 @@ async function scrapeHowoge() {
         const priceNum = item.rent;
 
         if (roomsNum >= config.minRooms && roomsNum <= config.maxRooms && areaNum >= config.minArea && areaNum <= config.maxArea && priceNum <= config.maxPrice) {
+            const cleanItemLink = (item.link || '').split('?')[0];
+            // Path segment (e.g. "1771-14536-9998") is stable across DB migrations; uid is primary but may change
+            const pathSegment = cleanItemLink.split('/').filter(Boolean).pop().replace(/\.html?$/i, '');
+            const id = item.uid ? item.uid.toString() : pathSegment;
+            if (!id) continue;
             results.push({
-                id: item.uid.toString(),
+                id,
                 title: item.title,
-                link: 'https://www.howoge.de' + item.link,
-                address: item.title, 
+                link: 'https://www.howoge.de' + cleanItemLink,
+                address: item.title,
                 price: item.rent + ' €',
                 area: item.area + ' m²',
                 rooms: item.rooms.toString(),
