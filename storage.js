@@ -30,10 +30,17 @@ function saveFlats(flats) {
 
 const stripQuery = url => (url || '').split('?')[0];
 
+// Same provider + address + area = same physical flat, regardless of ID/link changes
+const sameContent = (a, b) =>
+    a.source === b.source &&
+    a.address && b.address && a.address === b.address &&
+    a.area && b.area && a.area === b.area;
+
 function isNewFlat(flat, existingFlats) {
     return !existingFlats.some(f =>
         (f.source === flat.source && f.id === flat.id) ||
-        (stripQuery(f.link) === stripQuery(flat.link) && !!flat.link)
+        (stripQuery(f.link) === stripQuery(flat.link) && !!flat.link) ||
+        sameContent(f, flat)
     );
 }
 

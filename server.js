@@ -68,10 +68,12 @@ async function runScraper() {
         let updatedFlats = existingFlats.filter(existingFlat => {
             // Only remove if we successfully scraped that provider this run
             if (activeProviders[existingFlat.source]) {
-                const stillExists = activeProviders[existingFlat.source].some(
-                    scraped => scraped.id === existingFlat.id ||
-                        (scraped.link && existingFlat.link &&
-                         scraped.link.split('?')[0] === existingFlat.link.split('?')[0])
+                const stillExists = activeProviders[existingFlat.source].some(scraped =>
+                    scraped.id === existingFlat.id ||
+                    (scraped.link && existingFlat.link &&
+                     scraped.link.split('?')[0] === existingFlat.link.split('?')[0]) ||
+                    (scraped.address && scraped.address === existingFlat.address &&
+                     scraped.area && scraped.area === existingFlat.area)
                 );
                 if (!stillExists) {
                     console.log(`Flat removed (no longer listed on ${existingFlat.source}): ${existingFlat.title}`);
