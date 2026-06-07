@@ -37,6 +37,8 @@ async function runScraper() {
     try {
         console.log('--- Starting Scraper Run ---');
         const existingFlats = loadFlats();
+        console.log(`Loaded ${existingFlats.length} stored flats from disk`);
+        existingFlats.forEach(f => console.log(`  STORED  [${f.source}] id="${f.id}" link="${f.link}"`));
 
         console.log('Fetching flats from providers...');
         const degewoFlats = await scrapeDegewo();
@@ -76,7 +78,7 @@ async function runScraper() {
                      scraped.area && scraped.area === existingFlat.area)
                 );
                 if (!stillExists) {
-                    console.log(`Flat removed (no longer listed on ${existingFlat.source}): ${existingFlat.title}`);
+                    console.log(`REMOVED [${existingFlat.source}] id="${existingFlat.id}" — not found in scraped results`);
                     flatsRemoved++;
                     return false;
                 }
@@ -84,9 +86,12 @@ async function runScraper() {
             return true;
         });
 
+        console.log(`Scraped ${allScrapedFlats.length} total flats across all providers`);
+        allScrapedFlats.forEach(f => console.log(`  SCRAPED [${f.source}] id="${f.id}" link="${f.link}"`));
+
         for (const flat of allScrapedFlats) {
-            if (isNewFlat(flat, updatedFlats)) { // Use updatedFlats to avoid double-processing in the same run
-                console.log(`New flat found from ${flat.source}: ${flat.title}`);
+            if (isNewFlat(flat, updatedFlats)) {
+                console.log(`NEW [${flat.source}] id="${flat.id}" link="${flat.link}"`);
 
                 // Geocode only if coordinates are missing (Degewo/Gewobag)
                 const processedFlat = (flat.lat && flat.lon) ? flat : await geocodeFlat(flat);
@@ -96,8 +101,8 @@ async function runScraper() {
 
                 updatedFlats.push(processedFlat);
 
-                // Save after EACH new flat to ensure we don't lose progress and API stays updated
                 saveFlats(updatedFlats);
+                console.log(`SAVED ${updatedFlats.length} flats to disk`);
 
                 await sendNotification(processedFlat);
                 newFlatsCount++;

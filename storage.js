@@ -20,6 +20,7 @@ function loadFlats() {
 function saveFlats(flats) {
     const tmp = DATA_FILE + '.tmp';
     try {
+        fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
         fs.writeFileSync(tmp, JSON.stringify(flats, null, 2), 'utf8');
         fs.renameSync(tmp, DATA_FILE);
     } catch (error) {
