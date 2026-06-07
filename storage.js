@@ -9,18 +9,22 @@ function loadFlats() {
     }
     try {
         const data = fs.readFileSync(DATA_FILE, 'utf8');
-        return JSON.parse(data);
+        const parsed = JSON.parse(data);
+        return Array.isArray(parsed) ? parsed : [];
     } catch (error) {
-        console.error('Error loading flats:', error);
+        console.error('Error loading flats (corrupt data file?):', error);
         return [];
     }
 }
 
 function saveFlats(flats) {
+    const tmp = DATA_FILE + '.tmp';
     try {
-        fs.writeFileSync(DATA_FILE, JSON.stringify(flats, null, 2), 'utf8');
+        fs.writeFileSync(tmp, JSON.stringify(flats, null, 2), 'utf8');
+        fs.renameSync(tmp, DATA_FILE);
     } catch (error) {
         console.error('Error saving flats:', error);
+        try { fs.unlinkSync(tmp); } catch (_) {}
     }
 }
 
