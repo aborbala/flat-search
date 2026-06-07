@@ -28,9 +28,13 @@ function saveFlats(flats) {
     }
 }
 
+const stripQuery = url => (url || '').split('?')[0];
+
 function isNewFlat(flat, existingFlats) {
-    // Check by source+ID combo or Link for robustness
-    return !existingFlats.some(f => (f.source === flat.source && f.id === flat.id) || f.link === flat.link);
+    return !existingFlats.some(f =>
+        (f.source === flat.source && f.id === flat.id) ||
+        (stripQuery(f.link) === stripQuery(flat.link) && !!flat.link)
+    );
 }
 
 module.exports = {
